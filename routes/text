@@ -1,0 +1,86 @@
+const { query } = require('express');
+let express = require('express');
+const testscore = require('../models/testScore');
+
+let app = express();
+app.post('/add',function (req, res){
+    var newTestscore = new testscore ({
+        candidate_id: req.body.candidate_id,
+        first_round:req.body.first_round,
+        second_round:req.body.second_round,
+        third_round:req.body.third_round,
+    });
+    newTestscore.save(function(err,doc){
+        if(doc){
+     res.json({
+         data:doc,
+         msg:"Score add successfully!!",
+         status:200,
+     });
+     }else{
+         res.json({
+             msg:"oops somthink worng please check code !!",
+             status:200,
+         });
+     }
+    });
+ 
+ });
+
+ app.get('/list',function(req,res){
+
+    var  query = req.body.query;
+    
+    testscore.find( function(err, doc){
+        if(err){
+            res.json({
+                msg:"No data found !!!!!",
+                status:200,
+            });
+        }else{
+
+
+    if(query === 'totleAvrgScore'){
+                doc.forEach((t)=>{
+                    return t.totleAvrgScore = t.first_round + t.second_round + t.third_round / 3;
+               // console.log( t.first_round + t.second_round + t.third_round / 3 )
+                })
+
+                doc.sort((a, b) => (a.totleAvrgScore < b.totleAvrgScore) ? 1 : -1)
+            
+    }else{
+
+        doc.sort((a, b) => (a.first_round < b.first_round) ? 1 : -1)
+
+    }
+          res.json({
+              data:doc,
+              error:false,
+              msg:"data found",
+          });
+        }
+    }).populate({path:'candidate_id', select:'name'});
+});
+
+//////////////////////
+
+ app.get('/list',function(err,res){
+     
+    testscore.find( function(err, doc){
+        if(err){
+            res.json({
+                msg:"No data found !!!!!",
+                status:200,
+            });
+        }else{
+          res.json({
+              data:doc,
+              error:false,
+              msg:"data found",
+          });
+        }
+    }).populate({path:'candidate_id', select:''}).select({first_round:1});
+});
+
+
+module.exports = app;
